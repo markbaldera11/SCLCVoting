@@ -1,0 +1,132 @@
+-- ========================
+-- Admins Table
+-- ========================
+create table admins (
+  id uuid primary key default gen_random_uuid(),
+  full_name text not null,
+  username text not null unique,
+  password text not null,
+  created_at timestamp with time zone default now()
+);
+
+alter table admins enable row level security;
+
+-- Policy: service role (admin key) can manage admins
+create policy "Admins full access" on admins
+for all
+using (true)
+with check (true);
+
+-- ========================
+-- Voters Table
+-- ========================
+
+-- Sequence for voter_number starting at 20250000
+create sequence voter_number_seq start 20250000;
+
+create table voters (
+  id uuid primary key default gen_random_uuid(),
+  voter_number int not null default nextval('voter_number_seq') unique,
+  full_name text not null,
+  address text,
+  phone_number text,
+  login_name text not null,
+  has_voted boolean default false,
+  created_at timestamp with time zone default now()
+);
+
+alter table voters enable row level security;
+
+-- Voter can read only their own record
+create policy "Voter can read own record" on voters
+for select
+using (auth.uid()::uuid = id);
+
+-- Admin can manage voters
+create policy "Admins manage voters" on voters
+for all
+using (true)
+with check (true);
+
+-- ========================
+-- Candidates Table
+-- ========================
+create table candidates (
+  id uuid primary key default gen_random_uuid(),
+  full_name text not null,
+  position text not null,
+  description text,
+  created_at timestamp with time zone default now()
+);
+
+alter table candidates enable row level security;
+
+-- Anyone (voter or admin) can see candidates
+create policy "Anyone can view candidates" on candidates
+for select
+using (true);
+
+-- Only admin can manage candidates
+create policy "Admins manage candidates" on candidates
+for all
+using (true)
+with check (true);
+
+-- ========================
+-- Votes Table
+-- ========================
+create table votes (
+  id uuid primary key default gen_random_uuid(),
+  voter_id uuid not null references voters(id) on delete cascade,
+  candidate_id uuid not null references candidates(id) on delete cascade,
+  voted_at timestamp with time zone default now(),
+  unique (voter_id) -- each voter can only vote once
+);
+
+alter table votes enable row level security;
+
+-- Voter can insert a vote for themselves only
+create policy "Voter can insert own vote" on votes
+for insert
+with check (auth.uid()::uuid = voter_id);
+
+-- Voter can see their own vote
+create policy "Voter can see own vote" on votes
+for select
+using (auth.uid()::uuid = voter_id);
+
+-- Admin can view all votes
+create policy "Admins view all votes" on votes
+for select
+using (true);
+
+-- ========================
+-- Trigger to update voter.has_voted after voting
+-- ========================
+create or replace function mark_voter_has_voted()
+returns trigger as $$
+begin
+  update voters set has_voted = true where id = new.voter_id;
+  return new;
+end;
+$$ language plpgsql;
+
+create trigger trg_mark_voted
+after insert on votes
+for each row
+execute function mark_voter_has_voted();
+
+-- ========================
+-- Election Results View
+-- ========================
+create view election_results as
+select 
+  c.id as candidate_id,
+  c.full_name as candidate_name,
+  c.position,
+  c.description,
+  count(v.id) as total_votes
+from candidates c
+left join votes v on c.id = v.candidate_id
+group by c.id, c.full_name, c.position, c.description
+order by total_votes desc;
