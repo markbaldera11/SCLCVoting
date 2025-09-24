@@ -344,8 +344,8 @@
 
     <script>
         // Supabase Configuration
-        const SUPABASE_URL = 'https://kfgoaqcpcnfktqoxkwqu.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmZ29hcWNwY25ma3Rxb3hrd3F1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg3MDg4NTYsImV4cCI6MjA3NDI4NDg1Nn0.evIUyzJ_VNbneGk46EgycUmvTCNBtFHt4GuQo-2qoPw';
+        const SUPABASE_URL = 'https://gemoullkrjsloxjfdfzb.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdlbW91bGxrcmpzbG94amZkZnpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg3MjgyNTksImV4cCI6MjA3NDMwNDI1OX0.II9RlHAzsfg3mLWk6IlPicZjqao78T_3rmviK2wJwpU';
         const { createClient } = supabase;
         const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -395,14 +395,14 @@
                 }
 
                 // Simple password check (in production, use proper bcrypt hashing)
-                if (data.password_hash !== password) {
+                if (data.password !== password) {
                     showMessage('Invalid admin credentials', 'error');
                     return;
                 }
 
                 currentUser = data;
                 userType = 'admin';
-                document.getElementById('adminNameDisplay').textContent = data.full_name || data.username;
+                document.getElementById('adminNameDisplay').textContent = data.full_name;
                 
                 hideAllScreens();
                 document.getElementById('adminDashboard').classList.remove('hidden');
@@ -546,7 +546,7 @@
             }
 
             try {
-                // Insert vote
+                // Insert vote (unique constraint ensures one vote per voter)
                 const { error: voteError } = await supabaseClient
                     .from('votes')
                     .insert([{
@@ -888,5 +888,5 @@
             showLoginSelection();
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98431f13d753feeb',t:'MTc1ODcyNTcxMi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9843690c61634034',t:'MTc1ODcyODc0Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
