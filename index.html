@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voting System</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .fade-in { animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .slide-up { animation: slideUp 0.4s ease-out; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <!-- Login Selection Screen -->
+    <div id="loginSelection" class="min-h-screen flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md fade-in">
+            <div class="text-center mb-8">
+                <div class="bg-blue-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span class="text-white text-2xl">🗳️</span>
+                </div>
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">Voting System</h1>
+                <p class="text-gray-600">Choose your login type</p>
+            </div>
+            
+            <div class="space-y-4">
+                <button onclick="showLogin('admin')" class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-4 px-6 rounded-xl transition duration-200 transform hover:scale-105">
+                    🔐 Admin Login
+                </button>
+                <button onclick="showLogin('voter')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-xl transition duration-200 transform hover:scale-105">
+                    👤 Voter Login
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Login -->
+    <div id="adminLogin" class="hidden min-h-screen flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md slide-up">
+            <div class="text-center mb-8">
+                <div class="bg-red-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span class="text-white text-2xl">🔐</span>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">Admin Login</h2>
+                <p class="text-gray-600">Access administrative panel</p>
+            </div>
+            
+            <form onsubmit="adminLogin(event)" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Username</label>
+                    <input type="text" id="adminUsername" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                    <input type="password" id="adminPassword" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent">
+                </div>
+                <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                    Login as Admin
+                </button>
+            </form>
+            
+            <button onclick="showLoginSelection()" class="w-full mt-4 text-gray-600 hover:text-gray-800 font-medium">
+                ← Back to Selection
+            </button>
+        </div>
+    </div>
+
+    <!-- Voter Login -->
+    <div id="voterLogin" class="hidden min-h-screen flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md slide-up">
+            <div class="text-center mb-8">
+                <div class="bg-blue-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span class="text-white text-2xl">👤</span>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">Voter Login</h2>
+                <p class="text-gray-600">Enter your registered details</p>
+            </div>
+            
+            <form onsubmit="voterLogin(event)" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Voter ID Number</label>
+                    <input type="number" id="voterNumber" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Login Name</label>
+                    <input type="text" id="voterName" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200">
+                    Login as Voter
+                </button>
+            </form>
+            
+            <button onclick="showLoginSelection()" class="w-full mt-4 text-gray-600 hover:text-gray-800 font-medium">
+                ← Back to Selection
+            </button>
+        </div>
+    </div>
+
+    <!-- Admin Dashboard -->
+    <div id="adminDashboard" class="hidden min-h-screen bg-gray-50">
+        <nav class="bg-white shadow-sm border-b">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16">
+                    <div class="flex items-center">
+                        <span class="text-2xl">🔐</span>
+                        <h1 class="ml-3 text-xl font-semibold text-gray-900">Admin Dashboard</h1>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <span class="text-gray-600">Welcome, <span id="adminNameDisplay"></span></span>
+                        <button onclick="logout()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition duration-200">
+                            Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Admin Tabs -->
+            <div class="mb-8">
+                <div class="border-b border-gray-200">
+                    <nav class="-mb-px flex space-x-8">
+                        <button onclick="showAdminTab('voters')" id="votersTab" class="admin-tab-active py-2 px-1 border-b-2 font-medium text-sm">
+                            👥 Manage Voters
+                        </button>
+                        <button onclick="showAdminTab('candidates')" id="candidatesTab" class="admin-tab py-2 px-1 border-b-2 font-medium text-sm">
+                            🏆 Manage Candidates
+                        </button>
+                        <button onclick="showAdminTab('results')" id="resultsTab" class="admin-tab py-2 px-1 border-b-2 font-medium text-sm">
+                            📊 Election Results
+                        </button>
+                        <button onclick="showAdminTab('monitoring')" id="monitoringTab" class="admin-tab py-2 px-1 border-b-2 font-medium text-sm">
+                            📈 Vote Monitoring
+                        </button>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Voters Management -->
+            <div id="votersManagement" class="admin-content">
+                <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Register New Voter</h3>
+                    <form onsubmit="registerVoter(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                            <input type="text" id="newVoterName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Address</label>
+                            <input type="text" id="newVoterAddress" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                            <input type="tel" id="newVoterPhone" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Login Name</label>
+                            <input type="text" id="newVoterLogin" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                        <div class="md:col-span-2">
+                            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition duration-200">
+                                Register Voter
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Registered Voters</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Voter ID</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Address</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Login Name</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Voted</th>
+                                </tr>
+                            </thead>
+                            <tbody id="votersTable" class="bg-white divide-y divide-gray-200">
+                                <!-- Voters will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Candidates Management -->
+            <div id="candidatesManagement" class="admin-content hidden">
+                <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Add New Candidate</h3>
+                    <form onsubmit="addCandidate(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                            <input type="text" id="newCandidateName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Position</label>
+                            <input type="text" id="newCandidatePosition" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                            <textarea id="newCandidateDescription" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"></textarea>
+                        </div>
+                        <div class="md:col-span-2">
+                            <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition duration-200">
+                                Add Candidate
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Candidates List</h3>
+                    <div id="candidatesList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <!-- Candidates will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Election Results -->
+            <div id="electionResults" class="admin-content hidden">
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-6">Election Results</h3>
+                    <div id="resultsDisplay">
+                        <!-- Results will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vote Monitoring -->
+            <div id="voteMonitoring" class="admin-content hidden">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <div class="flex items-center">
+                            <div class="bg-blue-100 p-3 rounded-full">
+                                <span class="text-blue-600 text-xl">👥</span>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Total Voters</p>
+                                <p id="totalVoters" class="text-2xl font-bold text-gray-900">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <div class="flex items-center">
+                            <div class="bg-green-100 p-3 rounded-full">
+                                <span class="text-green-600 text-xl">✅</span>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Votes Cast</p>
+                                <p id="votesCast" class="text-2xl font-bold text-gray-900">0</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <div class="flex items-center">
+                            <div class="bg-yellow-100 p-3 rounded-full">
+                                <span class="text-yellow-600 text-xl">⏳</span>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-600">Turnout Rate</p>
+                                <p id="turnoutRate" class="text-2xl font-bold text-gray-900">0%</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Recent Votes</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Voter ID</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Voter Name</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vote Time</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentVotesTable" class="bg-white divide-y divide-gray-200">
+                                <!-- Recent votes will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Voter Dashboard -->
+    <div id="voterDashboard" class="hidden min-h-screen bg-gray-50">
+        <nav class="bg-white shadow-sm border-b">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16">
+                    <div class="flex items-center">
+                        <span class="text-2xl">🗳️</span>
+                        <h1 class="ml-3 text-xl font-semibold text-gray-900">Voter Portal</h1>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <span class="text-gray-600">Welcome, <span id="voterNameDisplay"></span></span>
+                        <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">ID: <span id="voterIdDisplay"></span></span>
+                        <button onclick="logout()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition duration-200">
+                            Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Voter Status -->
+            <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Your Voting Status</h3>
+                <div id="voterStatus" class="flex items-center space-x-4">
+                    <!-- Status will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Voting Section -->
+            <div id="votingSection" class="bg-white rounded-xl shadow-sm p-6 mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-6">Cast Your Vote</h3>
+                <div id="candidatesVoting">
+                    <!-- Candidates for voting will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Vote History -->
+            <div id="voteHistory" class="bg-white rounded-xl shadow-sm p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Your Vote History</h3>
+                <div id="voterVoteHistory">
+                    <!-- Vote history will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success/Error Messages -->
+    <div id="messageContainer" class="fixed top-4 right-4 z-50"></div>
+
+    <script>
+        // Supabase Configuration
+        const SUPABASE_URL = 'https://kfgoaqcpcnfktqoxkwqu.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmZ29hcWNwY25ma3Rxb3hrd3F1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg3MDg4NTYsImV4cCI6MjA3NDI4NDg1Nn0.evIUyzJ_VNbneGk46EgycUmvTCNBtFHt4GuQo-2qoPw';
+        const { createClient } = supabase;
+        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Global state
+        let currentUser = null;
+        let userType = null;
+
+        // Navigation functions
+        function showLoginSelection() {
+            hideAllScreens();
+            document.getElementById('loginSelection').classList.remove('hidden');
+        }
+
+        function showLogin(type) {
+            hideAllScreens();
+            if (type === 'admin') {
+                document.getElementById('adminLogin').classList.remove('hidden');
+            } else {
+                document.getElementById('voterLogin').classList.remove('hidden');
+            }
+        }
+
+        function hideAllScreens() {
+            const screens = ['loginSelection', 'adminLogin', 'voterLogin', 'adminDashboard', 'voterDashboard'];
+            screens.forEach(screen => {
+                document.getElementById(screen).classList.add('hidden');
+            });
+        }
+
+        // Admin login
+        async function adminLogin(event) {
+            event.preventDefault();
+            const username = document.getElementById('adminUsername').value;
+            const password = document.getElementById('adminPassword').value;
+
+            try {
+                // Query admins table with simplified authentication
+                const { data, error } = await supabaseClient
+                    .from('admins')
+                    .select('*')
+                    .eq('username', username)
+                    .single();
+
+                if (error || !data) {
+                    showMessage('Invalid admin credentials', 'error');
+                    return;
+                }
+
+                // Simple password check (in production, use proper bcrypt hashing)
+                if (data.password_hash !== password) {
+                    showMessage('Invalid admin credentials', 'error');
+                    return;
+                }
+
+                currentUser = data;
+                userType = 'admin';
+                document.getElementById('adminNameDisplay').textContent = data.full_name || data.username;
+                
+                hideAllScreens();
+                document.getElementById('adminDashboard').classList.remove('hidden');
+                loadAdminData();
+                showMessage('Welcome, Admin!', 'success');
+            } catch (error) {
+                showMessage('Login failed: ' + error.message, 'error');
+            }
+        }
+
+        // Voter login
+        async function voterLogin(event) {
+            event.preventDefault();
+            const voterNumber = document.getElementById('voterNumber').value;
+            const loginName = document.getElementById('voterName').value;
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('voters')
+                    .select('*')
+                    .eq('voter_number', voterNumber)
+                    .eq('login_name', loginName)
+                    .single();
+
+                if (error || !data) {
+                    showMessage('Invalid voter credentials', 'error');
+                    return;
+                }
+
+                currentUser = data;
+                userType = 'voter';
+                document.getElementById('voterNameDisplay').textContent = data.full_name;
+                document.getElementById('voterIdDisplay').textContent = data.voter_number;
+                
+                hideAllScreens();
+                document.getElementById('voterDashboard').classList.remove('hidden');
+                loadVoterData();
+                showMessage('Welcome, ' + data.full_name + '!', 'success');
+            } catch (error) {
+                showMessage('Login failed: ' + error.message, 'error');
+            }
+        }
+
+        // Logout
+        function logout() {
+            currentUser = null;
+            userType = null;
+            showLoginSelection();
+            showMessage('Logged out successfully', 'success');
+        }
+
+        // Admin tab navigation
+        function showAdminTab(tabName) {
+            // Update tab styles
+            document.querySelectorAll('.admin-tab, .admin-tab-active').forEach(tab => {
+                tab.className = 'admin-tab py-2 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm';
+            });
+            document.getElementById(tabName + 'Tab').className = 'admin-tab-active py-2 px-1 border-b-2 border-blue-500 text-blue-600 font-medium text-sm';
+
+            // Show/hide content
+            document.querySelectorAll('.admin-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+
+            const contentMap = {
+                'voters': 'votersManagement',
+                'candidates': 'candidatesManagement',
+                'results': 'electionResults',
+                'monitoring': 'voteMonitoring'
+            };
+
+            document.getElementById(contentMap[tabName]).classList.remove('hidden');
+
+            // Load specific data
+            if (tabName === 'results') loadElectionResults();
+            if (tabName === 'monitoring') loadVoteMonitoring();
+        }
+
+        // Register new voter
+        async function registerVoter(event) {
+            event.preventDefault();
+            
+            try {
+                // Create voter data with new schema
+                const voterData = {
+                    full_name: document.getElementById('newVoterName').value,
+                    address: document.getElementById('newVoterAddress').value,
+                    phone_number: document.getElementById('newVoterPhone').value,
+                    login_name: document.getElementById('newVoterLogin').value,
+                    has_voted: false
+                };
+
+                // Insert directly into voters table (no password needed)
+                const { data, error } = await supabaseClient
+                    .from('voters')
+                    .insert([voterData])
+                    .select('voter_number')
+                    .single();
+
+                if (error) throw error;
+
+                showMessage('Voter registered successfully! Voter ID: ' + data.voter_number, 'success');
+                event.target.reset();
+                loadVoters();
+                
+            } catch (error) {
+                showMessage('Registration failed: ' + error.message, 'error');
+                console.error('Registration error details:', error);
+            }
+        }
+
+        // Add new candidate
+        async function addCandidate(event) {
+            event.preventDefault();
+            const formData = {
+                full_name: document.getElementById('newCandidateName').value,
+                position: document.getElementById('newCandidatePosition').value,
+                description: document.getElementById('newCandidateDescription').value
+            };
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('candidates')
+                    .insert([formData]);
+
+                if (error) throw error;
+
+                showMessage('Candidate added successfully!', 'success');
+                event.target.reset();
+                loadCandidates();
+            } catch (error) {
+                showMessage('Failed to add candidate: ' + error.message, 'error');
+            }
+        }
+
+        // Cast vote
+        async function castVote(candidateId) {
+            if (currentUser.has_voted) {
+                showMessage('You have already voted!', 'error');
+                return;
+            }
+
+            try {
+                // Insert vote
+                const { error: voteError } = await supabaseClient
+                    .from('votes')
+                    .insert([{
+                        voter_id: currentUser.id,
+                        candidate_id: candidateId
+                    }]);
+
+                if (voteError) throw voteError;
+
+                // Update voter status
+                const { error: updateError } = await supabaseClient
+                    .from('voters')
+                    .update({ has_voted: true })
+                    .eq('id', currentUser.id);
+
+                if (updateError) throw updateError;
+
+                currentUser.has_voted = true;
+                showMessage('Vote cast successfully!', 'success');
+                loadVoterData();
+            } catch (error) {
+                showMessage('Failed to cast vote: ' + error.message, 'error');
+            }
+        }
+
+        // Load admin data
+        async function loadAdminData() {
+            loadVoters();
+            loadCandidates();
+        }
+
+        // Load voters
+        async function loadVoters() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('voters')
+                    .select('*')
+                    .order('voter_number');
+
+                if (error) throw error;
+
+                const tbody = document.getElementById('votersTable');
+                tbody.innerHTML = data.map(voter => `
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${voter.voter_number}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${voter.full_name}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${voter.address || 'N/A'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${voter.phone_number || 'N/A'}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${voter.login_name}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${voter.has_voted ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}">
+                                ${voter.has_voted ? 'Voted' : 'Not Voted'}
+                            </span>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                showMessage('Failed to load voters: ' + error.message, 'error');
+            }
+        }
+
+        // Load candidates
+        async function loadCandidates() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('candidates')
+                    .select('*')
+                    .order('position');
+
+                if (error) throw error;
+
+                const container = document.getElementById('candidatesList');
+                container.innerHTML = data.map(candidate => `
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <h4 class="font-semibold text-gray-900">${candidate.full_name}</h4>
+                        <p class="text-sm text-blue-600 font-medium">${candidate.position}</p>
+                        <p class="text-sm text-gray-600 mt-2">${candidate.description || 'No description'}</p>
+                    </div>
+                `).join('');
+            } catch (error) {
+                showMessage('Failed to load candidates: ' + error.message, 'error');
+            }
+        }
+
+        // Load election results
+        async function loadElectionResults() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('election_results')
+                    .select('*');
+
+                if (error) throw error;
+
+                // Group by position
+                const positions = {};
+                data.forEach(result => {
+                    if (!positions[result.position]) {
+                        positions[result.position] = [];
+                    }
+                    positions[result.position].push(result);
+                });
+
+                const container = document.getElementById('resultsDisplay');
+                container.innerHTML = Object.keys(positions).map(position => {
+                    const candidates = positions[position];
+                    const winner = candidates[0];
+                    const totalVotes = candidates.reduce((sum, c) => sum + c.total_votes, 0);
+
+                    return `
+                        <div class="mb-8">
+                            <h4 class="text-xl font-bold text-gray-900 mb-4">${position}</h4>
+                            <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                                <div class="flex items-center">
+                                    <span class="text-2xl mr-3">🏆</span>
+                                    <div>
+                                        <p class="font-semibold text-green-800">Winner: ${winner.candidate_name}</p>
+                                        <p class="text-sm text-green-600">${winner.total_votes} votes (${totalVotes > 0 ? Math.round((winner.total_votes / totalVotes) * 100) : 0}%)</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="space-y-2">
+                                ${candidates.map(candidate => `
+                                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                        <span class="font-medium">${candidate.candidate_name}</span>
+                                        <div class="flex items-center space-x-2">
+                                            <span class="text-sm text-gray-600">${candidate.total_votes} votes</span>
+                                            <div class="w-24 bg-gray-200 rounded-full h-2">
+                                                <div class="bg-blue-600 h-2 rounded-full" style="width: ${totalVotes > 0 ? (candidate.total_votes / totalVotes) * 100 : 0}%"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                showMessage('Failed to load results: ' + error.message, 'error');
+            }
+        }
+
+        // Load vote monitoring
+        async function loadVoteMonitoring() {
+            try {
+                // Get total voters
+                const { data: votersData, error: votersError } = await supabaseClient
+                    .from('voters')
+                    .select('id, has_voted');
+
+                if (votersError) throw votersError;
+
+                const totalVoters = votersData.length;
+                const votedCount = votersData.filter(v => v.has_voted).length;
+                const turnoutRate = totalVoters > 0 ? Math.round((votedCount / totalVoters) * 100) : 0;
+
+                document.getElementById('totalVoters').textContent = totalVoters;
+                document.getElementById('votesCast').textContent = votedCount;
+                document.getElementById('turnoutRate').textContent = turnoutRate + '%';
+
+                // Get recent votes
+                const { data: recentVotes, error: votesError } = await supabaseClient
+                    .from('votes')
+                    .select(`
+                        *,
+                        voters (voter_number, full_name)
+                    `)
+                    .order('voted_at', { ascending: false })
+                    .limit(10);
+
+                if (votesError) throw votesError;
+
+                const tbody = document.getElementById('recentVotesTable');
+                tbody.innerHTML = recentVotes.map(vote => `
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${vote.voters.voter_number}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${vote.voters.full_name}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${new Date(vote.voted_at).toLocaleString()}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                Completed
+                            </span>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                showMessage('Failed to load monitoring data: ' + error.message, 'error');
+            }
+        }
+
+        // Load voter data
+        async function loadVoterData() {
+            loadVoterStatus();
+            loadVotingCandidates();
+            loadVoterHistory();
+        }
+
+        // Load voter status
+        function loadVoterStatus() {
+            const statusContainer = document.getElementById('voterStatus');
+            if (currentUser.has_voted) {
+                statusContainer.innerHTML = `
+                    <div class="flex items-center text-green-600">
+                        <span class="text-2xl mr-3">✅</span>
+                        <div>
+                            <p class="font-semibold">Vote Submitted</p>
+                            <p class="text-sm">Thank you for participating in the election!</p>
+                        </div>
+                    </div>
+                `;
+            } else {
+                statusContainer.innerHTML = `
+                    <div class="flex items-center text-blue-600">
+                        <span class="text-2xl mr-3">🗳️</span>
+                        <div>
+                            <p class="font-semibold">Ready to Vote</p>
+                            <p class="text-sm">Please cast your vote below</p>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // Load voting candidates
+        async function loadVotingCandidates() {
+            if (currentUser.has_voted) {
+                document.getElementById('votingSection').innerHTML = `
+                    <div class="text-center py-8">
+                        <span class="text-6xl">✅</span>
+                        <h3 class="text-xl font-semibold text-gray-900 mt-4">You have already voted</h3>
+                        <p class="text-gray-600">Thank you for participating in the election!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('candidates')
+                    .select('*')
+                    .order('position');
+
+                if (error) throw error;
+
+                // Group by position
+                const positions = {};
+                data.forEach(candidate => {
+                    if (!positions[candidate.position]) {
+                        positions[candidate.position] = [];
+                    }
+                    positions[candidate.position].push(candidate);
+                });
+
+                const container = document.getElementById('candidatesVoting');
+                container.innerHTML = Object.keys(positions).map(position => `
+                    <div class="mb-8">
+                        <h4 class="text-lg font-semibold text-gray-900 mb-4">Vote for ${position}</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            ${positions[position].map(candidate => `
+                                <div class="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition duration-200">
+                                    <h5 class="font-semibold text-gray-900">${candidate.full_name}</h5>
+                                    <p class="text-sm text-gray-600 mt-1">${candidate.description || 'No description'}</p>
+                                    <button onclick="castVote('${candidate.id}')" class="mt-3 w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition duration-200">
+                                        Vote for ${candidate.full_name}
+                                    </button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                showMessage('Failed to load candidates: ' + error.message, 'error');
+            }
+        }
+
+        // Load voter history
+        async function loadVoterHistory() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('votes')
+                    .select(`
+                        *,
+                        candidates (full_name, position)
+                    `)
+                    .eq('voter_id', currentUser.id)
+                    .order('voted_at', { ascending: false });
+
+                if (error) throw error;
+
+                const container = document.getElementById('voterVoteHistory');
+                if (data.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-8 text-gray-500">
+                            <span class="text-4xl">📝</span>
+                            <p class="mt-2">No votes cast yet</p>
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = `
+                        <div class="space-y-3">
+                            ${data.map(vote => `
+                                <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                                    <div>
+                                        <p class="font-medium text-gray-900">${vote.candidates.full_name}</p>
+                                        <p class="text-sm text-gray-600">${vote.candidates.position}</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-sm text-gray-500">${new Date(vote.voted_at).toLocaleDateString()}</p>
+                                        <p class="text-xs text-gray-400">${new Date(vote.voted_at).toLocaleTimeString()}</p>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                showMessage('Failed to load vote history: ' + error.message, 'error');
+            }
+        }
+
+        // Show message
+        function showMessage(message, type) {
+            const container = document.getElementById('messageContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `mb-4 p-4 rounded-lg shadow-lg transition-all duration-300 ${
+                type === 'success' ? 'bg-green-100 border border-green-400 text-green-700' : 
+                'bg-red-100 border border-red-400 text-red-700'
+            }`;
+            messageDiv.textContent = message;
+            
+            container.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 5000);
+        }
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            showLoginSelection();
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98431f13d753feeb',t:'MTc1ODcyNTcxMi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
