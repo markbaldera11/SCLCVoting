@@ -1,0 +1,149 @@
+-- ========================
+-- SAFE RESET (Drop existing objects if any)
+-- ========================
+DROP VIEW IF EXISTS election_results CASCADE;
+DROP TABLE IF EXISTS votes CASCADE;
+DROP TABLE IF EXISTS voters CASCADE;
+DROP TABLE IF EXISTS candidates CASCADE;
+DROP TABLE IF EXISTS admins CASCADE;
+DROP SEQUENCE IF EXISTS voter_number_seq CASCADE;
+
+-- ========================
+-- ADMINS TABLE
+-- ========================
+CREATE TABLE admins (
+    admin_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    full_name TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    password TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT now()
+);
+
+-- ========================
+-- VOTERS TABLE
+-- ========================
+CREATE TABLE voters (
+    voter_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    voter_number TEXT UNIQUE NOT NULL,
+    name TEXT NOT NULL,
+    address TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT now()
+);
+
+-- Auto-generate voter_number: starts from 20250000
+CREATE SEQUENCE voter_number_seq START 20250000;
+
+CREATE OR REPLACE FUNCTION generate_voter_number()
+RETURNS TEXT AS $$
+BEGIN
+  RETURN nextval('voter_number_seq')::TEXT;
+END;
+$$ LANGUAGE plpgsql;
+
+ALTER TABLE voters ALTER COLUMN voter_number SET DEFAULT generate_voter_number();
+
+-- ========================
+-- CANDIDATES TABLE
+-- ========================
+CREATE TABLE candidates (
+    candidate_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
+    position TEXT NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT now()
+);
+
+-- ========================
+-- VOTES TABLE
+-- ========================
+CREATE TABLE votes (
+    vote_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    voter_id UUID REFERENCES voters(voter_id) ON DELETE CASCADE,
+    candidate_id UUID REFERENCES candidates(candidate_id) ON DELETE CASCADE,
+    voted_at TIMESTAMP DEFAULT now(),
+    UNIQUE(voter_id, candidate_id)
+);
+
+-- ========================
+-- ELECTION RESULTS (View)
+-- ========================
+CREATE OR REPLACE VIEW election_results AS
+SELECT 
+    c.candidate_id,
+    c.name AS candidate_name,
+    c.position,
+    c.description,
+    COUNT(v.vote_id) AS total_votes
+FROM candidates c
+LEFT JOIN votes v ON v.candidate_id = c.candidate_id
+GROUP BY c.candidate_id, c.name, c.position, c.description;
+
+-- ========================
+-- ENABLE RLS (Row Level Security)
+-- ========================
+ALTER TABLE admins ENABLE ROW LEVEL SECURITY;
+ALTER TABLE voters ENABLE ROW LEVEL SECURITY;
+ALTER TABLE candidates ENABLE ROW LEVEL SECURITY;
+ALTER TABLE votes ENABLE ROW LEVEL SECURITY;
+
+-- ------------------------
+-- Policies for ADMINS
+-- ------------------------
+CREATE POLICY "Admins can manage admins"
+ON admins
+FOR ALL
+USING (true)
+WITH CHECK (true);
+
+-- ------------------------
+-- Policies for VOTERS
+-- ------------------------
+CREATE POLICY "Admins can insert voters"
+ON voters
+FOR INSERT
+WITH CHECK (true);
+
+CREATE POLICY "Everyone can read voters"
+ON voters
+FOR SELECT
+USING (true);
+
+-- ------------------------
+-- Policies for CANDIDATES
+-- ------------------------
+CREATE POLICY "Admins can insert candidates"
+ON candidates
+FOR INSERT
+WITH CHECK (true);
+
+CREATE POLICY "Everyone can read candidates"
+ON candidates
+FOR SELECT
+USING (true);
+
+-- ------------------------
+-- Policies for VOTES
+-- ------------------------
+CREATE POLICY "Voters can insert votes"
+ON votes
+FOR INSERT
+WITH CHECK (true);
+
+CREATE POLICY "Everyone can read votes"
+ON votes
+FOR SELECT
+USING (true);
+
+-- ========================
+-- SAMPLE DATA (Optional)
+-- ========================
+INSERT INTO admins (full_name, email, password)
+VALUES ('System Admin', 'lensayrq@gmail.com', 'Ate_Bunso28');
+
+INSERT INTO candidates (name, position, description)
+VALUES 
+('Alice Johnson', 'President', 'Leading with vision and transparency.'),
+('Bob Smith', 'Vice President', 'Dedicated to teamwork and progress.');
+
+INSERT INTO voters (name, address) VALUES ('Juan Dela Cruz', 'San Pablo City');
+INSERT INTO voters (name, address) VALUES ('Maria Santos', 'Lipa City');
